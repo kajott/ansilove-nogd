@@ -1,5 +1,6 @@
-CFLAGS  = -std=c99 -D_GNU_SOURCE -Werror
+CFLAGS  = -std=c99 -D_GNU_SOURCE -Werror -Os
 CFLAGS += -Ilibansilove/include -Ilibansilove/src -Ilibansilove/compat -Iansilove/compat -Igdstubs -Ilodepng
+LDFLAGS =
 
 OBJDIR = _obj
 
@@ -27,13 +28,20 @@ SOURCES = \
 	ansilove/compat/strtonum.c \
 	libansilove/compat/reallocarray.c \
 	gdstubs/gdstubs.c \
-	lodepng/lodepng.c
+	$(OBJDIR)/lodepng.c
 
 ifneq ($(CROSS),)
-	CC = x86_64-w64-mingw32-gcc
-	CFLAGS += -Imingw_compat -include mingw_compat.h
+	CROSS_PREFIX = x86_64-w64-mingw32-
+	CC = $(CROSS_PREFIX)gcc
+	STRIP = $(CROSS_PREFIX)strip
+	CFLAGS += -Imingw_compat -include mingw_compat.h -static
+	LDFLAGS += -static
 	SOURCES += mingw_compat/mingw_compat.c
 	VPATH_EXTRAS = :mingw_compat
+	SUFFIX = .exe
+else
+	STRIP = strip
+	SUFFIX = -$(shell uname -s | tr "[:upper:]" "[:lower:]")
 endif
 
 VPATH = $(OBJDIR):ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:libansilove/compat:gdstubs:lodepng${VPATH_EXTRAS}
@@ -42,19 +50,19 @@ OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(notdir $(SOURCES)))
 
 LIBS = -lm -lpthread
 
-BINARY = ansilove.exe
+BINARY = ansilove$(SUFFIX)
 
 all: $(BINARY)
 
 $(OBJDIR):
 	mkdir $@
 
-lodepng/lodepng.c: lodepng/lodepng.cpp
+$(OBJDIR)/lodepng.c: lodepng/lodepng.cpp | $(OBJDIR)
 	cp $< $@
 
 $(OBJDIR)/loadfile.c: libansilove/src/loadfile.c | $(OBJDIR)
 ifneq ($(CROSS),)
-	sed 's/O_RDONLY/O_RDONLY|O_BINARY/' $< >$@
+	sed -r "s/O_RDONLY/\0|O_BINARY/" $< >$@
 else
 	cp $< $@
 endif
@@ -63,9 +71,22 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BINARY): $(OBJECTS)
-	$(CC) -o $@ $^ $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(STRIP) $@
 
 clean:
-	rm -rf $(OBJDIR) $(BINARY)
+	rm -rf $(OBJDIR)
+distclean: clean
+	rm -f $(BINARY)
 
-.PHONY: all clean
+ifeq ($(CROSS),)
+PREFIX ?= /usr/local
+INSTALL_BIN = $(PREFIX)/bin/ansilove
+install: $(INSTALL_BIN)
+$(INSTALL_BIN): $(BINARY)
+	install -m 755 $< $@
+uninstall:
+	rm $(INSTALL_BIN)
+endif
+
+.PHONY: all clean distclean install uninstall
