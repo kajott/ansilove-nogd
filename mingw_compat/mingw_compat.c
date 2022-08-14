@@ -17,9 +17,12 @@ void err(int eval, const char *fmt, ...) {
     exit(eval);
 }
 
+#define LOG2_PAGESIZE 12
+#define VPAGESIZE (1 << LOG2_PAGESIZE)
+
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
     (void)addr, (void)prot, (void)flags;
-    addr = malloc(length);
+    addr = calloc((length + VPAGESIZE - 1) >> LOG2_PAGESIZE, VPAGESIZE);
     if (!addr) { return addr; }
     lseek(fd, offset, SEEK_SET);
     read(fd, addr, length);
@@ -35,7 +38,7 @@ int munmap(void *addr, size_t length) {
 char *strndup(const char *s, int n) {
     char *ptr;
     int m = (int)strlen(s);
-    if (n < m) { n = m; }
+    if (m < n) { n = m; }
     ptr = malloc(n + 1);
     if (!ptr) { return ptr; }
     memcpy(ptr, s, n);

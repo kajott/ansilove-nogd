@@ -1,6 +1,8 @@
 CFLAGS  = -std=c99 -D_GNU_SOURCE -Werror
 CFLAGS += -Ilibansilove/include -Ilibansilove/src -Ilibansilove/compat -Iansilove/compat -Igdstubs -Ilodepng
 
+OBJDIR = _obj
+
 SOURCES = \
 	ansilove/src/ansilove.c \
 	ansilove/src/types.c \
@@ -10,7 +12,7 @@ SOURCES = \
 	libansilove/src/drawchar.c \
 	libansilove/src/fonts.c \
 	libansilove/src/error.c \
-	libansilove/src/loadfile.c \
+	$(OBJDIR)/loadfile.c \
 	libansilove/src/init.c \
 	libansilove/src/output.c \
 	libansilove/src/savefile.c \
@@ -34,9 +36,8 @@ ifneq ($(CROSS),)
 	VPATH_EXTRAS = :mingw_compat
 endif
 
-VPATH = ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:libansilove/compat:gdstubs:lodepng${VPATH_EXTRAS}
+VPATH = $(OBJDIR):ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:libansilove/compat:gdstubs:lodepng${VPATH_EXTRAS}
 
-OBJDIR = _obj
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(notdir $(SOURCES)))))
 
 LIBS = -lm -lpthread
@@ -46,10 +47,17 @@ BINARY = ansilove.exe
 all: $(BINARY)
 
 $(OBJDIR):
-	mkdir $(OBJDIR)
+	mkdir $@
 
 lodepng/lodepng.c: lodepng/lodepng.cpp
 	cp $< $@
+
+$(OBJDIR)/loadfile.c: libansilove/src/loadfile.c | $(OBJDIR)
+ifneq ($(CROSS),)
+	sed 's/O_RDONLY/O_RDONLY|O_BINARY/' $< >$@
+else
+	cp $< $@
+endif
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
