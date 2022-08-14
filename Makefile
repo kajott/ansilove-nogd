@@ -1,10 +1,6 @@
 CFLAGS  = -std=c99 -D_GNU_SOURCE -Werror
 CFLAGS += -Ilibansilove/include -Ilibansilove/src -Ilibansilove/compat -Iansilove/compat -Igdstubs
 
-ifneq ($(CROSS),)
-	CC = x86_64-w64-mingw32-gcc
-endif
-
 SOURCES = \
 	ansilove/src/ansilove.c \
 	ansilove/src/types.c \
@@ -27,14 +23,22 @@ SOURCES = \
 	libansilove/src/loaders/xbin.c \
 	ansilove/compat/pledge.c \
 	ansilove/compat/strtonum.c \
+	libansilove/compat/reallocarray.c \
 	gdstubs/gdstubs.c
 
-VPATH = ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:gdstubs
+ifneq ($(CROSS),)
+	CC = x86_64-w64-mingw32-gcc
+	CFLAGS += -Imingw_compat -include mingw_compat.h
+	SOURCES += mingw_compat/mingw_compat.c
+	VPATH_EXTRAS = :mingw_compat
+endif
+
+VPATH = ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:libansilove/compat:gdstubs${VPATH_EXTRAS}
 
 OBJDIR = _obj
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(notdir $(SOURCES)))))
 
-LIBS = -lm
+LIBS = -lm -lpthread
 
 BINARY = ansilove.exe
 
