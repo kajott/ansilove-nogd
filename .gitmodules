@@ -1,0 +1,6 @@
+[submodule "libansilove"]
+	path = libansilove
+	url = https://github.com/ansilove/libansilove
+[submodule "ansilove"]
+	path = ansilove
+	url = https://github.com/ansilove/ansilove
