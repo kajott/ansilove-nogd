@@ -4,3 +4,6 @@
 [submodule "ansilove"]
 	path = ansilove
 	url = https://github.com/ansilove/ansilove
+[submodule "lodepng"]
+	path = lodepng
+	url = https://github.com/lvandeve/lodepng

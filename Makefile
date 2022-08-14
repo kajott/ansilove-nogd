@@ -1,5 +1,5 @@
 CFLAGS  = -std=c99 -D_GNU_SOURCE -Werror
-CFLAGS += -Ilibansilove/include -Ilibansilove/src -Ilibansilove/compat -Iansilove/compat -Igdstubs
+CFLAGS += -Ilibansilove/include -Ilibansilove/src -Ilibansilove/compat -Iansilove/compat -Igdstubs -Ilodepng
 
 SOURCES = \
 	ansilove/src/ansilove.c \
@@ -24,7 +24,8 @@ SOURCES = \
 	ansilove/compat/pledge.c \
 	ansilove/compat/strtonum.c \
 	libansilove/compat/reallocarray.c \
-	gdstubs/gdstubs.c
+	gdstubs/gdstubs.c \
+	lodepng/lodepng.c
 
 ifneq ($(CROSS),)
 	CC = x86_64-w64-mingw32-gcc
@@ -33,7 +34,7 @@ ifneq ($(CROSS),)
 	VPATH_EXTRAS = :mingw_compat
 endif
 
-VPATH = ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:libansilove/compat:gdstubs${VPATH_EXTRAS}
+VPATH = ansilove/src:libansilove/src:libansilove/src/loaders:ansilove/compat:libansilove/compat:gdstubs:lodepng${VPATH_EXTRAS}
 
 OBJDIR = _obj
 OBJECTS = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(notdir $(SOURCES)))))
@@ -46,6 +47,9 @@ all: $(BINARY)
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
+
+lodepng/lodepng.c: lodepng/lodepng.cpp
+	cp $< $@
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@

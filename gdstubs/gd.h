@@ -9,8 +9,8 @@ typedef gdImage* gdImagePtr;
 
 #define gdImageTrueColor(im) (1)  // we only emulate truecolor images
 
-extern gdImagePtr gdImageCreate(int sx, int sy);
 extern gdImagePtr gdImageCreateTrueColor(int sx, int sy);
+#define gdImageCreate gdImageCreateTrueColor
 extern void gdImageDestroy(gdImagePtr im);
 extern int gdImageColorAllocate(gdImagePtr im, int r, int g, int b);
 extern void gdImageColorTransparent(gdImagePtr im, int color);
